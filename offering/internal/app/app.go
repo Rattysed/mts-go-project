@@ -19,16 +19,11 @@ type App struct {
 }
 
 func initServer(cfg *config.Config, logger *zap.Logger) http.Handler {
-	//serverMux := http.NewServeMux()
-
 	handler := handlers.NewController(manager.NewManager(cfg, logger), logger)
 
 	router := chi.NewRouter()
 	router.Post("/offers", handler.CreateOffer)
 	router.Get("/offers/{offerID}", handler.ParseOffer)
-
-	//serverMux.HandleFunc("/parseOffer", handler.ParseOffer)
-	//serverMux.HandleFunc("/createOffer", handler.CreateOffer)
 
 	return router
 }
@@ -57,7 +52,7 @@ func (a *App) Run() {
 	go func() {
 		err := a.server.ListenAndServe()
 		if err != nil {
-			fmt.Println(err)
+			a.Logger.Warn(err.Error())
 		}
 	}()
 }

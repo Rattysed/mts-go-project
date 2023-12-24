@@ -28,18 +28,18 @@ func (c *Controller) ParseOffer(w http.ResponseWriter, r *http.Request) {
 
 	payload, ok := c.manager.JwtPayloadFromRequest(offId, c.manager.Cfg.JWT)
 	if !ok {
-		c.Logger.Fatal("Bad token")
+		c.Logger.Warn("Bad token")
 	}
 
 	orderJson, ok := payload["order"].(string)
 	if !ok {
-		c.Logger.Fatal("incorrect data in token")
+		c.Logger.Warn("incorrect data in token")
 	}
 
 	order := models.Offer{}
 	err := json.Unmarshal([]byte(orderJson), &order)
 	if err != nil {
-		c.Logger.Fatal(err.Error())
+		c.Logger.Warn(err.Error())
 	}
 
 	resp := models.Answer{
@@ -56,13 +56,13 @@ func (c *Controller) CreateOffer(w http.ResponseWriter, r *http.Request) {
 	bytesBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.Write([]byte("Плохое тело запроса"))
-		c.Logger.Fatal(err.Error())
+		c.Logger.Warn(err.Error())
 	}
 
 	var jwtStruct models.Offer
 	err = json.Unmarshal(bytesBody, &jwtStruct)
 	if err != nil {
-		c.Logger.Fatal(err.Error())
+		c.Logger.Warn(err.Error())
 	}
 
 	jwtStruct.Price.Amount = manager.GeneratePrice(jwtStruct.FROM, jwtStruct.TO)
@@ -70,7 +70,7 @@ func (c *Controller) CreateOffer(w http.ResponseWriter, r *http.Request) {
 
 	bytes, err := json.Marshal(jwtStruct)
 	if err != nil {
-		c.Logger.Fatal(err.Error())
+		c.Logger.Warn(err.Error())
 	}
 
 	payload := jwt.MapClaims{
@@ -82,7 +82,7 @@ func (c *Controller) CreateOffer(w http.ResponseWriter, r *http.Request) {
 	jwtKey := c.manager.Cfg.JWT
 	t, err := token.SignedString([]byte(jwtKey))
 	if err != nil {
-		c.Logger.Fatal(err.Error())
+		c.Logger.Warn(err.Error())
 	}
 
 	responseStruct := models.Answer{
@@ -92,7 +92,7 @@ func (c *Controller) CreateOffer(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := json.Marshal(responseStruct)
 	if err != nil {
-		c.Logger.Fatal(err.Error())
+		c.Logger.Warn(err.Error())
 	}
 
 	w.Write(resp)

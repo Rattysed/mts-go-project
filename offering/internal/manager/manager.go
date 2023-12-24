@@ -22,20 +22,6 @@ func NewManager(cfg *config.Config, logger *zap.Logger) *Manager {
 	}
 }
 
-type CreateRequest struct {
-	FROM     string `json:"from"`
-	TO       string `json:"to"`
-	ClientID int    `json:"client_id"`
-}
-
-type CreateResponse struct {
-	ID       string  `json:"id"`
-	FROM     string  `json:"from"`
-	TO       string  `json:"to"`
-	ClientID int     `json:"client_id"`
-	Price    float64 `json:"price"`
-}
-
 func GeneratePrice(from models.Location, to models.Location) int {
 	x := int(math.Abs(from.Lat + from.Lng - to.Lng - to.Lat))
 	return (x*31)%hashMod + 100
@@ -46,12 +32,12 @@ func (man *Manager) JwtPayloadFromRequest(tokenString string, secret string) (jw
 		return []byte(secret), nil
 	})
 	if err != nil {
-		man.Logger.Fatal(err.Error())
+		man.Logger.Warn(err.Error())
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
-		man.Logger.Fatal("Invalid token")
+		man.Logger.Warn("Invalid token")
 	}
 
 	return claims, true
