@@ -1,0 +1,31 @@
+package models
+
+type Status string
+
+const (
+	DRIVER_SEARCH Status = "DRIVER_SEARCH"
+	DRIVER_FOUND         = "DRIVER_FOUND"
+	ON_POSITION          = "ON_POSITION"
+	STARTED              = "STARTED"
+	ENDED                = "ENDED"
+	CANCELLED            = "CANCELLED"
+)
+
+type Location struct {
+	Lat float64 `json:"lat"`
+	Lng float64 `json:"lng"`
+}
+
+type Price struct {
+	Amount   int    `json:"amount"`
+	Currency string `json:"currency"`
+}
+
+type Trip struct {
+	ID       string   `json:"id"`
+	FROM     Location `json:"from"`
+	TO       Location `json:"to"`
+	ClientID string   `json:"client_id"`
+	Price    Price    `json:"price"`
+	Status   Status   `json:"status"`
+}
