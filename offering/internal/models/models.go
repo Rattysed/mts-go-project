@@ -13,7 +13,7 @@ type Price struct {
 type Offer struct {
 	FROM     Location `json:"from"`
 	TO       Location `json:"to"`
-	ClientID int      `json:"client_id"`
+	ClientID string   `json:"client_id"`
 	Price    Price    `json:"price"`
 }
 

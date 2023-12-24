@@ -16,14 +16,14 @@ type Location struct {
 type request struct {
 	FROM     Location `json:"from"`
 	TO       Location `json:"to"`
-	ClientID int      `json:"client_id"`
+	ClientID string   `json:"client_id"`
 }
 
 func createOffer() {
 	var req = &request{
 		FROM:     Location{4, 12},
 		TO:       Location{8.3823, 9.2},
-		ClientID: 1,
+		ClientID: "sd",
 	}
 
 	bytesRepresentation, err := json.Marshal(req)
