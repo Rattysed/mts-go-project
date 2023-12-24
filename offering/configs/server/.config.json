@@ -1,0 +1,6 @@
+{
+  "ip": "127.0.0.1",
+  "port": "63343",
+  "version": "v0.0.1",
+  "jwt": "very-secret-key"
+}
