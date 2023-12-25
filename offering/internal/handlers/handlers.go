@@ -25,6 +25,7 @@ func NewController(man *manager.Manager, logger *zap.Logger) *Controller {
 
 func (c *Controller) ParseOffer(w http.ResponseWriter, r *http.Request) {
 	offId := chi.URLParam(r, "offerID")
+	c.Logger.Info("Got Parse request")
 
 	payload, ok := c.manager.JwtPayloadFromRequest(offId, c.manager.Cfg.JWT)
 	if !ok {
@@ -54,6 +55,7 @@ func (c *Controller) ParseOffer(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) CreateOffer(w http.ResponseWriter, r *http.Request) {
 	bytesBody, err := io.ReadAll(r.Body)
+	c.Logger.Info("Got CreateOffer request")
 	if err != nil {
 		w.Write([]byte("Плохое тело запроса"))
 		c.Logger.Warn(err.Error())

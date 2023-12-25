@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	logBase "log"
+	"time"
 	"trip/internal/app"
 	"trip/internal/config"
 	"trip/logger"
@@ -35,6 +36,8 @@ func main() {
 
 	a, err := app.New(config, log)
 	if err != nil {
+		log.Info("Пиздец")
+		time.Sleep(5 * time.Second)
 		log.Fatal(err.Error())
 	}
 	log.Info("Created app by config")

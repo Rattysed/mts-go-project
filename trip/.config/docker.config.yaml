@@ -2,7 +2,7 @@ app:
   shutdown_timeout: 10s
 database:
   dsn: postgres://postgres:postgres@db:5432/example?sslmode=disable
-  migrations_dir: "migrations"
+  migrations_dir: "../migrations"
 kafka:
   listener_name: "trip_listener"
   to_driver_name: "driver_listener"

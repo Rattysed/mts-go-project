@@ -53,3 +53,31 @@ services:
       GroupID: logger-group
     depends_on:
       - kafka
+    expose:
+      - "8080"
+    volumes:
+      - './trip/migrations/:/trip/migrations/'
+
+  offering:
+    build:
+      context: "offering"
+      dockerfile: "offering.Dockerfile"
+    expose:
+      - "8080"
+    ports:
+      - 8080:8080
+    environment:
+      kafkaURL: kafka:9092
+      GroupID: logger-group
+    depends_on:
+      - kafka
+
+  trip-sender-mock:
+    build:
+      context: trip-sender-mock
+    environment:
+      kafkaURL: kafka:9092
+      topic: trip_listener
+      huepic: topic2
+    depends_on:
+      - kafka
