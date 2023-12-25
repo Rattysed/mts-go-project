@@ -37,7 +37,7 @@ func (dbc *DBController) AddTrip(trip models.Trip) {
 
 func (dbc *DBController) GetTrip(tripID string, userID string) *models.Trip {
 	collection := dbc.mongoClient.Database("my_mongo").Collection("trips")
-	filter := bson.M{"id": tripID}
+	filter := bson.M{"id": tripID, "clientid": userID}
 	ctx := context.Background()
 
 	var trip models.Trip
@@ -85,13 +85,13 @@ func (dbc *DBController) ListTrips(userID string) []models.Trip {
 	return trips
 }
 
-func (dbc *DBController) CancelTrip(tripID string, userID string) error {
+func (dbc *DBController) ChangeStatus(tripID string, userID string, status string) error {
 	collection := dbc.mongoClient.Database("my_mongo").Collection("trips")
 	filter := bson.M{"id": tripID, "clientid": userID}
 	ctx := context.Background()
 	update := bson.M{
 		"$set": bson.M{
-			"status": "CANCELED",
+			"status": status,
 		},
 	}
 

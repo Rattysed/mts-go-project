@@ -53,10 +53,15 @@ services:
       GroupID: logger-group
     depends_on:
       - kafka
-    expose:
-      - "8080"
-    volumes:
-      - './trip/migrations/:/trip/migrations/'
+
+  client:
+    build:
+      context: "client"
+      dockerfile: "client.Dockerfile"
+    environment:
+      kafkaURL: kafka:9092
+    depends_on:
+      - kafka
 
   offering:
     build:

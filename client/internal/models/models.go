@@ -38,3 +38,12 @@ type Answer struct {
 	ID    string                 `json:"id"`
 	Order map[string]interface{} `json:"order"`
 }
+
+type Event struct {
+	Id              string            `json:"id"`
+	Source          string            `json:"source"`
+	Type            string            `json:"type"`
+	DataContentType string            `json:"datacontenttype"`
+	Time            string            `json:"time"`
+	Data            map[string]string `json:"data"`
+}

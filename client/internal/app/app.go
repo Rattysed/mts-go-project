@@ -4,6 +4,7 @@ import (
 	"client/internal/admin"
 	"client/internal/config"
 	"client/internal/handlers"
+	"client/internal/handlers/listener"
 	"context"
 	"fmt"
 	"github.com/go-chi/chi/v5"
@@ -16,10 +17,11 @@ import (
 )
 
 type App struct {
-	cfg    *config.Config
-	server *http.Server
-	Logger *zap.Logger
-	client *mongo.Client
+	cfg      *config.Config
+	server   *http.Server
+	Logger   *zap.Logger
+	client   *mongo.Client
+	listener *listener.Listener
 }
 
 func initServer(cfg *config.Config, logger *zap.Logger, client *mongo.Client) http.Handler {
@@ -46,15 +48,23 @@ func NewApp(cfg *config.Config) *App {
 		logger.Warn("Init mongo error")
 	}
 
+	l, err := listener.New(&cfg.Kafka, logger, admin.NewDBController(cfg, client, logger))
+
+	if err != nil {
+		log.Fatal("Failed to create listener")
+	}
+
 	newServer := &http.Server{
-		Addr:    cfg.IP + ":" + cfg.Port,
+		Addr:    cfg.App.IP + ":" + cfg.App.Port,
 		Handler: initServer(cfg, logger, client),
 	}
 
 	return &App{
-		cfg:    cfg,
-		server: newServer,
-		Logger: logger,
+		cfg:      cfg,
+		server:   newServer,
+		Logger:   logger,
+		listener: l,
+		client:   client,
 	}
 }
 
@@ -78,7 +88,14 @@ func (a *App) Run() {
 	go func() {
 		err := a.server.ListenAndServe()
 		if err != nil {
-			fmt.Println(err)
+			a.Logger.Fatal(err.Error())
+		}
+	}()
+
+	go func() {
+		err := a.listener.Serve()
+		if err != nil {
+			a.Logger.Fatal(err.Error())
 		}
 	}()
 }
