@@ -56,6 +56,22 @@ services:
     volumes:
       - './trip/migrations/:/trip/migrations/'
 
+  offering:
+    build:
+      context: "offering"
+      dockerfile: "offering.Dockerfile"
+    expose:
+      - 8080
+    ports:
+      - 8080:8080
+    environment:
+      kafkaURL: kafka:9092
+      GroupID: logger-group
+    depends_on:
+      - kafka
+    volumes:
+      - './trip/migrations/:/trip/migrations/'
+
   trip-sender-mock:
     build:
       context: trip-sender-mock

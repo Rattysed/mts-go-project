@@ -54,6 +54,7 @@ func main() {
 	defer writer2.Close()
 	fmt.Println("start producing ... !!")
 	for i := 0; ; i++ {
+		time.Sleep(3 * time.Second)
 		key := fmt.Sprintf("Key-%d", i)
 		msg := kafka.Message{
 			Key:   []byte(key),
@@ -67,10 +68,10 @@ func main() {
 		}
 
 		if err != nil {
-			fmt.Println("Насрали " + err.Error())
+			fmt.Println("Ошабка... " + err.Error())
 		} else {
 			fmt.Println("produced", key)
 		}
-		time.Sleep(100 * time.Second)
+		time.Sleep(50 * time.Second)
 	}
 }

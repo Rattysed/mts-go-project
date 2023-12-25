@@ -111,19 +111,23 @@ func (l *Listener) OnCancel(values models.Event) {
 
 func (l *Listener) OnCreate(values models.Event) {
 	offerId := values.Data["offer_id"]
-	resp, err := http.Get("http://localhost:63343/offers/" + offerId)
+	resp, err := http.Get("http://localhost:8100/offers/" + offerId)
 	if err != nil {
 		l.Logger.Error("Error occurred while requesting offer: " + err.Error())
+		return
 	}
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		l.Logger.Error("Error occurred while requesting offer: " + err.Error())
+		return
 	}
 	var offer models.Offer
 	err = json.Unmarshal(bytes, &offer)
 	if err != nil {
 		l.Logger.Error("Something wrong wih requested offer: " + err.Error())
+		return
 	}
+	l.Logger.Info("Parsed offer with id: " + offer.Id)
 
 }
 

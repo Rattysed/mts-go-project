@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -60,6 +61,7 @@ func (a *App) Serve() error {
 }
 
 func initDB(ctx context.Context, cfg *config.DatabaseConfig) (*sqlx.DB, error) {
+	time.Sleep(2 * time.Second)
 	db, err := sqlx.Open(driverName, cfg.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to database: %w", err)

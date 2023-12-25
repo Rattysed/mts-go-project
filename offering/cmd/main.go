@@ -13,7 +13,7 @@ import (
 
 func main() {
 	var cfgPath string
-	flag.StringVar(&cfgPath, "config", "configs/server/.config.json", "set config path")
+	flag.StringVar(&cfgPath, "config", "../configs/server/.config.json", "set config path")
 	flag.Parse()
 
 	cfg, err := config.NewConfig(cfgPath)
