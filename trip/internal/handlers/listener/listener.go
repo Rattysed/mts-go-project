@@ -111,7 +111,7 @@ func (l *Listener) OnCancel(values models.Event) {
 
 func (l *Listener) OnCreate(values models.Event) {
 	offerId := values.Data["offer_id"]
-	resp, err := http.Get("http://localhost:8100/offers/" + offerId)
+	resp, err := http.Get("http://offering:8080/offers/" + offerId)
 	if err != nil {
 		l.Logger.Error("Error occurred while requesting offer: " + err.Error())
 		return

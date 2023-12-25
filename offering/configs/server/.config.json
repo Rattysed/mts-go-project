@@ -1,5 +1,5 @@
 {
-  "ip": "http://localhost",
+  "ip": "",
   "port": "8080",
   "version": "v0.0.1",
   "jwt": "very-secret-key"

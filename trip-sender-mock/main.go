@@ -47,11 +47,8 @@ func main() {
 	// get kafka writer using environment variables.
 	kafkaURL := os.Getenv("kafkaURL")
 	topic := os.Getenv("topic")
-	huepic := os.Getenv("huepic")
 	writer := newKafkaWriter(kafkaURL, topic)
-	writer2 := newKafkaWriter(kafkaURL, huepic)
 	defer writer.Close()
-	defer writer2.Close()
 	fmt.Println("start producing ... !!")
 	for i := 0; ; i++ {
 		time.Sleep(3 * time.Second)
@@ -63,15 +60,12 @@ func main() {
 		var err error
 		if i%2 == 0 {
 			err = writer.WriteMessages(context.Background(), msg)
-		} else {
-			err = writer2.WriteMessages(context.Background(), msg)
 		}
-
 		if err != nil {
 			fmt.Println("Ошабка... " + err.Error())
 		} else {
 			fmt.Println("produced", key)
 		}
-		time.Sleep(50 * time.Second)
+		time.Sleep(25 * time.Second)
 	}
 }
