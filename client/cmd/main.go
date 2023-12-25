@@ -1,12 +1,10 @@
 package main
 
 import (
-	"client/internal/admin"
 	"client/internal/app"
 	"client/internal/config"
 	"context"
 	"flag"
-	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 	"os/signal"
 	"syscall"
@@ -23,23 +21,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ctx := context.Background()
-	uri := "mongodb://localhost:27017"
-	dbName := "test"
-	tripCollectionName := "trips"
-	UsersToTripsCollectionName := "usersToTrips"
-	mongoDB, err := admin.NewMongoDB(ctx, uri, dbName, tripCollectionName, UsersToTripsCollectionName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func(client *mongo.Client, ctx context.Context) {
-		err := client.Disconnect(ctx)
-		if err != nil {
-
-		}
-	}(&mongoDB.Client, ctx)
-
-	a := app.NewApp(cfg, mongoDB)
+	a := app.NewApp(cfg)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

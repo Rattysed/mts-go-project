@@ -8,7 +8,7 @@ const (
 	ON_POSITION          = "ON_POSITION"
 	STARTED              = "STARTED"
 	ENDED                = "ENDED"
-	CANCELLED            = "CANCELLED"
+	CANCELED             = "CANCELED"
 )
 
 type Location struct {
@@ -28,4 +28,13 @@ type Trip struct {
 	ClientID string   `json:"client_id"`
 	Price    Price    `json:"price"`
 	Status   Status   `json:"status"`
+}
+
+type Offer struct {
+	OfferID string `json:"offer_id"`
+}
+
+type Answer struct {
+	ID    string                 `json:"id"`
+	Order map[string]interface{} `json:"order"`
 }
