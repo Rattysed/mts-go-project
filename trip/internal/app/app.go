@@ -3,85 +3,83 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"os"
-	"strings"
+	"trip/internal/handlers/listener"
 
-	"github.com/jmoiron/sqlx"
-	"github.com/pressly/goose/v3"
-	kafka "github.com/segmentio/kafka-go"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"go.uber.org/zap"
+
+	"trip/internal/config"
 )
 
-const driverName = "postgres"
-
 type App struct {
-	db *sqlx.DB
-
 	logger *zap.Logger
 
-	listener     *kafka.Reader
-	clientWriter *kafka.Writer
-	driverWriter *kafka.Writer
+	listener *listener.Listener
 }
 
-func getKafkaReader(kafkaURL, topic, groupID string) *kafka.Reader {
-	brokers := strings.Split(kafkaURL, ",")
-	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  brokers,
-		GroupID:  groupID,
-		Topic:    topic,
-		MinBytes: 10e3, // 10KB
-		MaxBytes: 10e6, // 10MB
-	})
-}
+func New(cfg *config.Config, logger *zap.Logger) (*App, error) {
+	//db, err := initDB(context.Background(), &cfg.Database)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-func newKafkaWriter(kafkaURL, topic string) *kafka.Writer {
-	return &kafka.Writer{
-		Addr:     kafka.TCP(kafkaURL),
-		Topic:    topic,
-		Balancer: &kafka.LeastBytes{},
-	}
-}
+	logger.Info("Db init successfully finished")
 
-func New(config *Config, logger *zap.Logger) (*App, error) {
-	db, err := initDB(context.Background(), &config.Database)
+	l, err := listener.New(&cfg.Kafka, logger)
 	if err != nil {
 		return nil, err
 	}
-
+	logger.Info("Logger successfully created")
 	a := &App{
-		db:     db,
-		logger: logger,
+		logger:   logger,
+		listener: l,
 	}
 	return a, nil
 }
 
-func initDB(ctx context.Context, config *DatabaseConfig) (*sqlx.DB, error) {
-	db, err := sqlx.Open(driverName, config.DSN)
+func (a *App) Serve() error {
+	a.logger.Info("Starting app serving")
+	done := make(chan os.Signal, 1)
+
+	go func() {
+		err := a.listener.Serve()
+		if err != nil {
+			a.logger.Fatal(err.Error())
+		}
+	}()
+	<-done
+	return nil
+}
+
+func initDB(ctx context.Context, cfg *config.DatabaseConfig) (*pgxpool.Pool, error) {
+	pgxConfig, err := pgxpool.ParseConfig(cfg.DSN)
+	if err != nil {
+		return nil, err
+	}
+
+	pool, err := pgxpool.ConnectConfig(ctx, pgxConfig)
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to database: %w", err)
 	}
 
-	db.DB.SetMaxOpenConns(100)  // The default is 0 (unlimited)
-	db.DB.SetMaxIdleConns(10)   // defaultMaxIdleConns = 2
-	db.DB.SetConnMaxLifetime(0) // 0, connections are reused forever.
+	// migrations
 
-	if err = db.PingContext(ctx); err != nil {
+	m, err := migrate.New(cfg.MigrationsDir, cfg.DSN)
+	if err != nil {
 		return nil, err
 	}
 
-	// migrations
-
-	fs := os.DirFS(config.MigrationsDir)
-	goose.SetBaseFS(fs)
-
-	if err = goose.SetDialect(driverName); err != nil {
-		panic(err)
+	if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+		return nil, err
 	}
 
-	if err = goose.UpContext(ctx, db.DB, "."); err != nil {
-		panic(err)
+	if err := m.Up(); err != nil {
+		return nil, err
 	}
 
-	return db, nil
+	return pool, nil
 }

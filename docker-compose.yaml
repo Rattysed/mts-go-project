@@ -1,6 +1,5 @@
 version: '2.3'
 services:
-
   zookeeper:
     hostname: zookeeper
     image: wurstmeister/zookeeper:3.4.6
@@ -29,3 +28,28 @@ services:
     environment:
       MONGO_DATA_DIR: /data/db
       MONGO_LOG_DIR: /dev/null
+
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: example
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  trip:
+    build:
+      context: "trip"
+      dockerfile: "trip.Dockerfile"
+    environment:
+      kafkaURL: kafka:9092
+      GroupID: logger-group
+    depends_on:
+      - kafka

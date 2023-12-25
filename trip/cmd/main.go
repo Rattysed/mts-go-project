@@ -5,13 +5,14 @@ import (
 	"fmt"
 	logBase "log"
 	"trip/internal/app"
+	"trip/internal/config"
 	"trip/logger"
 )
 
 func getConfigPath() string {
 	var configPath string
 
-	flag.StringVar(&configPath, "c", ".config/local.config.yaml", "path to config file")
+	flag.StringVar(&configPath, "c", "../.config/local.config.yaml", "path to config file")
 	flag.Parse()
 
 	return configPath
@@ -22,9 +23,10 @@ func main() {
 	if err != nil {
 		logBase.Fatal(err)
 	}
+	log.Info("Got logger")
 
 	path := getConfigPath()
-	config, err := app.NewConfig(path)
+	config, err := config.NewConfig(path)
 
 	if err != nil {
 		log.Fatal(err.Error())
@@ -35,7 +37,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	log.Info("Config had read")
+	log.Info("Created app by config")
+
+	if err = a.Serve(); err != nil {
+		log.Fatal(err.Error())
+	}
 
 	fmt.Print(a)
 }
