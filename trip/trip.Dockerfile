@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY . .
 
+RUN apk add --no-cache bash
+
 RUN go mod download
 
 

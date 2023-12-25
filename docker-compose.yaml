@@ -53,6 +53,8 @@ services:
       GroupID: logger-group
     depends_on:
       - kafka
+    volumes:
+      - './trip/migrations/:/trip/migrations/'
 
   trip-sender-mock:
     build:

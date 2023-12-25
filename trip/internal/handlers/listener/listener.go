@@ -3,15 +3,17 @@ package listener
 import (
 	"context"
 	"encoding/json"
+	"io"
+	"net/http"
 	"os"
 	"strings"
-	"trip/models"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 
-	"time"
 	"trip/internal/config"
+	"trip/models"
 )
 
 type Listener struct {
@@ -108,6 +110,20 @@ func (l *Listener) OnCancel(values models.Event) {
 }
 
 func (l *Listener) OnCreate(values models.Event) {
+	offerId := values.Data["offer_id"]
+	resp, err := http.Get("http://localhost:63343/offers/" + offerId)
+	if err != nil {
+		l.Logger.Error("Error occurred while requesting offer: " + err.Error())
+	}
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		l.Logger.Error("Error occurred while requesting offer: " + err.Error())
+	}
+	var offer models.Offer
+	err = json.Unmarshal(bytes, &offer)
+	if err != nil {
+		l.Logger.Error("Something wrong wih requested offer: " + err.Error())
+	}
 
 }
 

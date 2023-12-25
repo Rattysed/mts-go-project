@@ -28,4 +28,8 @@ type Event struct {
 }
 
 type Trip struct {
+	Id      string
+	UserId  string
+	OfferId string
+	Status  string
 }
