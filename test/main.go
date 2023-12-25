@@ -19,11 +19,15 @@ type request struct {
 	ClientID string   `json:"client_id"`
 }
 
+type OfferId struct {
+	OfferID string `json:"offer_id"`
+}
+
 func createOffer() {
 	var req = &request{
-		FROM:     Location{4, 12},
-		TO:       Location{8.3823, 9.2},
-		ClientID: "sd",
+		FROM:     Location{282, 218218},
+		TO:       Location{1, 1.732},
+		ClientID: "HELLO",
 	}
 
 	bytesRepresentation, err := json.Marshal(req)
@@ -45,6 +49,31 @@ func createOffer() {
 	fmt.Println("Ответ сервера:", string(bytesResp))
 }
 
+func createTrip() {
+	var req = &OfferId{
+		OfferID: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmRlciI6IntcImZyb21cIjp7XCJsYXRcIjo0LFwibG5nXCI6MTJ9LFwidG9cIjp7XCJsYXRcIjo4LjM4MjMsXCJsbmdcIjo5LjJ9LFwiY2xpZW50X2lkXCI6XCJzZFwiLFwicHJpY2VcIjp7XCJhbW91bnRcIjoxMzEsXCJjdXJyZW5jeVwiOlwiJFwifX0ifQ._XcYRQ2Zbh5q4G_VNV-BjF1XF04snUEvih6hYDohluM",
+	}
+
+	bytesRepresentation, err := json.Marshal(req)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	response, err := http.Post("http://127.0.0.1:8080/trips", "application/json", bytes.NewBuffer(bytesRepresentation))
+	defer response.Body.Close()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	bytesResp, err := io.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("Ответ сервера:", string(bytesResp))
+}
+
 func main() {
 	createOffer()
+	//createTrip()
 }
