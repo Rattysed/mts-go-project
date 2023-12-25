@@ -5,10 +5,26 @@ import (
 	"os"
 )
 
-type Config struct {
+const (
+	DefaultServeAddress = "localhost:9626"
+	DefaultListenerName = "client_listener"
+	DefaultWriterName   = "client_writer"
+)
+
+type KafkaConfig struct {
+	ListenerName string `yaml:"listener_name"`
+	WriterName   string `yaml:"writer_name"`
+}
+
+type AppConfig struct {
 	IP      string `json:"ip"`
 	Port    string `json:"port"`
 	Version string `json:"version"`
+}
+
+type Config struct {
+	App   AppConfig
+	Kafka KafkaConfig
 }
 
 func NewConfig(filePath string) (*Config, error) {
@@ -18,12 +34,18 @@ func NewConfig(filePath string) (*Config, error) {
 		return nil, err
 	}
 
-	var cfg Config
+	var cfg AppConfig
 	// Десериализация
 	err = json.Unmarshal(data, &cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return &cfg, nil
+	return &Config{
+		App: cfg,
+		Kafka: KafkaConfig{
+			ListenerName: DefaultListenerName,
+			WriterName:   DefaultWriterName,
+		},
+	}, nil
 }

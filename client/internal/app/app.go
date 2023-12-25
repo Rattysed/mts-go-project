@@ -47,7 +47,7 @@ func NewApp(cfg *config.Config) *App {
 	}
 
 	newServer := &http.Server{
-		Addr:    cfg.IP + ":" + cfg.Port,
+		Addr:    cfg.App.IP + ":" + cfg.App.Port,
 		Handler: initServer(cfg, logger, client),
 	}
 
