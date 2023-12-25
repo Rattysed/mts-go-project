@@ -159,7 +159,7 @@ func (c *Controller) CancelTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := c.DBController.CancelTrip(tripID, userID)
+	err := c.DBController.ChangeStatus(tripID, userID, models.CANCELED)
 	if err != nil {
 		http.Error(w, "Failed to update data", http.StatusNotFound)
 		return

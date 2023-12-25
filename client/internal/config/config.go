@@ -7,8 +7,8 @@ import (
 
 const (
 	DefaultServeAddress = "localhost:9626"
-	DefaultListenerName = "client_listener"
-	DefaultWriterName   = "client_writer"
+	DefaultListenerName = "trip_listener"
+	DefaultToClientName = "client_listener"
 )
 
 type KafkaConfig struct {
@@ -45,7 +45,7 @@ func NewConfig(filePath string) (*Config, error) {
 		App: cfg,
 		Kafka: KafkaConfig{
 			ListenerName: DefaultListenerName,
-			WriterName:   DefaultWriterName,
+			WriterName:   DefaultToClientName,
 		},
 	}, nil
 }

@@ -1,9 +1,11 @@
 package listener
 
 import (
+	"client/internal/admin"
 	"client/internal/config"
+	"client/internal/models"
 	"context"
-	"fmt"
+	"encoding/json"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	"os"
@@ -12,9 +14,10 @@ import (
 )
 
 type Listener struct {
-	logger *zap.Logger
-	reader *kafka.Reader
-	writer *kafka.Writer
+	Logger *zap.Logger
+	Reader *kafka.Reader
+	Writer *kafka.Writer
+	dbc    *admin.DBController
 }
 
 func getKafkaReader(kafkaURL, topic, groupID string) *kafka.Reader {
@@ -36,27 +39,48 @@ func newKafkaWriter(kafkaURL, topic string) *kafka.Writer {
 	}
 }
 
-func New(cfg *config.KafkaConfig, logger *zap.Logger) (*Listener, error) {
+func New(cfg *config.KafkaConfig, logger *zap.Logger, dbc *admin.DBController) (*Listener, error) {
 	url := os.Getenv("kafkaURL") // TODO добавить в docker Compose -env
 	l := &Listener{
-		logger: logger,
-		reader: getKafkaReader(url, cfg.ListenerName, ""),
-		writer: newKafkaWriter(url, cfg.WriterName),
+		Logger: logger,
+		Reader: getKafkaReader(url, cfg.ListenerName, ""),
+		Writer: newKafkaWriter(url, cfg.WriterName),
+		dbc:    dbc,
 	}
 	return l, nil
 }
 
 func (l *Listener) Serve() error {
-	l.logger.Info("Started Listener serving")
+	l.Logger.Info("Started Listener serving")
 	done := make(chan os.Signal, 1)
 	go func() {
 		time.Sleep(5 * time.Second) // даём время на запуск кафки
+		l.Logger.Info("Kafka listener awakened")
 		for {
-			msg, err := l.reader.ReadMessage(context.Background())
+			msg, err := l.Reader.ReadMessage(context.Background())
 			if err != nil {
-				l.logger.Fatal(err.Error())
+				l.Logger.Error("Error occurred after reading message " + err.Error())
 			}
-			fmt.Println(msg)
+			var values models.Event
+			if string(msg.Value) != "" {
+				if err := json.Unmarshal(msg.Value, &values); err != nil {
+					l.Logger.Error("Failed to unmarshal json " + err.Error())
+				}
+			}
+			l.Logger.Info(values.Type)
+			switch values.Type {
+			case "trip.event.accepted":
+				l.OnAccept(values)
+			case "trip.event.canceled":
+				l.OnCancel(values)
+			case "trip.event.created":
+				l.OnCreate(values)
+			case "trip.event.ended":
+				l.OnEnd(values)
+			case "trip.event.started":
+				l.OnStart(values)
+			}
+			time.Sleep(100 * time.Millisecond)
 		}
 	}()
 	<-done
@@ -65,10 +89,30 @@ func (l *Listener) Serve() error {
 	return nil
 }
 
+func (l *Listener) OnAccept(values models.Event) {
+
+}
+
+func (l *Listener) OnCancel(values models.Event) {
+
+}
+
+func (l *Listener) OnCreate(values models.Event) {
+
+}
+
+func (l *Listener) OnEnd(values models.Event) {
+
+}
+
+func (l *Listener) OnStart(values models.Event) {
+
+}
+
 func (l *Listener) Shutdown() {
 	_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	l.reader.Close()
-	l.writer.Close()
+	l.Reader.Close()
+	l.Writer.Close()
 }
