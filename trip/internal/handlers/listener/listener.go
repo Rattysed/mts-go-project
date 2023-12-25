@@ -2,20 +2,23 @@ package listener
 
 import (
 	"context"
-	"fmt"
-	"github.com/segmentio/kafka-go"
-	"go.uber.org/zap"
+	"encoding/json"
 	"os"
 	"strings"
+	"trip/models"
+
+	"github.com/segmentio/kafka-go"
+	"go.uber.org/zap"
+
 	"time"
 	"trip/internal/config"
 )
 
 type Listener struct {
-	logger        *zap.Logger
-	reader        *kafka.Reader
-	driver_writer *kafka.Writer
-	client_writer *kafka.Writer
+	Logger       *zap.Logger
+	Reader       *kafka.Reader
+	DriverWriter *kafka.Writer
+	ClientWriter *kafka.Writer
 }
 
 func getKafkaReader(kafkaURL, topic, groupID string) *kafka.Reader {
@@ -40,25 +43,45 @@ func newKafkaWriter(kafkaURL, topic string) *kafka.Writer {
 func New(cfg *config.KafkaConfig, logger *zap.Logger) (*Listener, error) {
 	url := os.Getenv("kafkaURL") // TODO добавить в docker Compose -env
 	l := &Listener{
-		logger:        logger,
-		reader:        getKafkaReader(url, cfg.ListenerName, ""),
-		driver_writer: newKafkaWriter(url, cfg.ToDriverName),
-		client_writer: newKafkaWriter(url, cfg.ToClientName),
+		Logger:       logger,
+		Reader:       getKafkaReader(url, cfg.ListenerName, ""),
+		DriverWriter: newKafkaWriter(url, cfg.ToDriverName),
+		ClientWriter: newKafkaWriter(url, cfg.ToClientName),
 	}
 	return l, nil
 }
 
 func (l *Listener) Serve() error {
-	l.logger.Info("Started Listener serving")
+	l.Logger.Info("Started Listener serving")
 	done := make(chan os.Signal, 1)
 	go func() {
 		time.Sleep(5 * time.Second) // даём время на запуск кафки
+		l.Logger.Info("Kafka listener awakened")
 		for {
-			msg, err := l.reader.ReadMessage(context.Background())
+			msg, err := l.Reader.ReadMessage(context.Background())
 			if err != nil {
-				l.logger.Fatal(err.Error())
+				l.Logger.Error("Error occurred after reading message " + err.Error())
 			}
-			fmt.Println(msg)
+			var values models.Event
+			if string(msg.Value) != "" {
+				if err := json.Unmarshal(msg.Value, &values); err != nil {
+					l.Logger.Error("Failed to unmarshal json " + err.Error())
+				}
+			}
+			l.Logger.Info(values.Type)
+			switch values.Type {
+			case "trip.command.accept":
+				l.OnAccept(values)
+			case "trip.command.cancel":
+				l.OnCancel(values)
+			case "trip.command.create":
+				l.OnCreate(values)
+			case "trip.command.end":
+				l.OnEnd(values)
+			case "trip.command.start":
+				l.OnStart(values)
+			}
+			time.Sleep(100 * time.Millisecond)
 		}
 	}()
 	<-done
@@ -71,7 +94,27 @@ func (l *Listener) Shutdown() {
 	_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	l.reader.Close()
-	l.client_writer.Close()
-	l.driver_writer.Close()
+	l.Reader.Close()
+	l.ClientWriter.Close()
+	l.DriverWriter.Close()
+}
+
+func (l *Listener) OnAccept(values models.Event) {
+
+}
+
+func (l *Listener) OnCancel(values models.Event) {
+
+}
+
+func (l *Listener) OnCreate(values models.Event) {
+
+}
+
+func (l *Listener) OnEnd(values models.Event) {
+
+}
+
+func (l *Listener) OnStart(values models.Event) {
+
 }

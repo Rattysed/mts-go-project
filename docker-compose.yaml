@@ -53,3 +53,13 @@ services:
       GroupID: logger-group
     depends_on:
       - kafka
+
+  trip-sender-mock:
+    build:
+      context: trip-sender-mock
+    environment:
+      kafkaURL: kafka:9092
+      topic: trip_listener
+      huepic: topic2
+    depends_on:
+      - kafka

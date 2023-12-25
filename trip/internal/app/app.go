@@ -3,29 +3,32 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"os"
-	"trip/internal/handlers/listener"
 
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+	"github.com/pressly/goose/v3"
 	"go.uber.org/zap"
 
 	"trip/internal/config"
+	"trip/internal/handlers/listener"
 )
+
+const driverName = "postgres"
 
 type App struct {
 	logger *zap.Logger
 
 	listener *listener.Listener
+
+	db *sqlx.DB
 }
 
 func New(cfg *config.Config, logger *zap.Logger) (*App, error) {
-	//db, err := initDB(context.Background(), &cfg.Database)
-	//if err != nil {
-	//	return nil, err
-	//}
+	db, err := initDB(context.Background(), &cfg.Database)
+	if err != nil {
+		return nil, err
+	}
 
 	logger.Info("Db init successfully finished")
 
@@ -37,6 +40,7 @@ func New(cfg *config.Config, logger *zap.Logger) (*App, error) {
 	a := &App{
 		logger:   logger,
 		listener: l,
+		db:       db,
 	}
 	return a, nil
 }
@@ -55,31 +59,32 @@ func (a *App) Serve() error {
 	return nil
 }
 
-func initDB(ctx context.Context, cfg *config.DatabaseConfig) (*pgxpool.Pool, error) {
-	pgxConfig, err := pgxpool.ParseConfig(cfg.DSN)
-	if err != nil {
-		return nil, err
-	}
-
-	pool, err := pgxpool.ConnectConfig(ctx, pgxConfig)
+func initDB(ctx context.Context, cfg *config.DatabaseConfig) (*sqlx.DB, error) {
+	db, err := sqlx.Open(driverName, cfg.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to database: %w", err)
 	}
 
+	db.DB.SetMaxOpenConns(100)  // The default is 0 (unlimited)
+	db.DB.SetMaxIdleConns(10)   // defaultMaxIdleConns = 2
+	db.DB.SetConnMaxLifetime(0) // 0, connections are reused forever.
+
+	if err = db.PingContext(ctx); err != nil {
+		return nil, err
+	}
+
 	// migrations
 
-	m, err := migrate.New(cfg.MigrationsDir, cfg.DSN)
-	if err != nil {
+	fs := os.DirFS(cfg.MigrationsDir)
+	goose.SetBaseFS(fs)
+
+	if err = goose.SetDialect(driverName); err != nil {
 		return nil, err
 	}
 
-	if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+	if err = goose.UpContext(ctx, db.DB, "."); err != nil {
 		return nil, err
 	}
 
-	if err := m.Up(); err != nil {
-		return nil, err
-	}
-
-	return pool, nil
+	return db, nil
 }
