@@ -69,6 +69,8 @@ func NewApp(cfg *config.Config) *App {
 }
 
 func initMongo() (*mongo.Client, error) {
+	log.Println("Connecting to mongo")
+
 	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		log.Fatal(err)
@@ -84,7 +86,7 @@ func initMongo() (*mongo.Client, error) {
 }
 
 func (a *App) Run() {
-	a.Logger.Info("Starting app")
+	a.Logger.Info("Starting app client")
 	go func() {
 		err := a.server.ListenAndServe()
 		if err != nil {
